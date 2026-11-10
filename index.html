@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>veil-runner — Undetected Loader for Windows</title>
+<style>
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --bg-deep: #070a18;
+    --bg-indigo: #101336;
+    --bg-charcoal: #0b0e1f;
+    --accent: #6c5ce7;
+    --accent-2: #00d2ff;
+    --accent-3: #a855f7;
+    --text: #e8eaf6;
+    --muted: #9aa3c7;
+    --card-bg: rgba(255, 255, 255, 0.035);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --radius: 16px;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(108, 92, 231, 0.28), transparent 60%),
+      radial-gradient(1000px 600px at 90% 0%, rgba(0, 210, 255, 0.16), transparent 55%),
+      radial-gradient(900px 800px at 50% 120%, rgba(168, 85, 247, 0.14), transparent 60%),
+      linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-indigo) 45%, var(--bg-charcoal) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    background: rgba(10, 13, 32, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+    gap: 20px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 0.95rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 18px rgba(108, 92, 231, 0.55);
+  }
+
+  .brand span.accent {
+    background: linear-gradient(90deg, var(--accent-2), var(--accent-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: #fff;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #6c5ce7 0%, #00b8e6 100%);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(108, 92, 231, 0.4);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(108, 92, 231, 0.6);
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: var(--text);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .nav .btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 96px 0 80px;
+    text-align: center;
+    position: relative;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b9c2ff;
+    background: rgba(108, 92, 231, 0.14);
+    border: 1px solid rgba(108, 92, 231, 0.4);
+    box-shadow: inset 0 0 20px rgba(108, 92, 231, 0.12);
+    margin-bottom: 28px;
+  }
+
+  .pill .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #00e6a7;
+    box-shadow: 0 0 10px #00e6a7;
+    animation: pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(2.3rem, 6vw, 4rem);
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    max-width: 860px;
+    margin: 0 auto 22px;
+  }
+
+  .gradient-text {
+    background: linear-gradient(100deg, #8f7bff 0%, #00d2ff 45%, #c084fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-desc {
+    max-width: 640px;
+    margin: 0 auto 38px;
+    color: var(--muted);
+    font-size: clamp(1rem, 2vw, 1.12rem);
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+
+  .hero-actions .btn {
+    padding: 15px 32px;
+    font-size: 1rem;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 150px;
+    padding: 16px 24px;
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(6px);
+  }
+
+  .stat-chip .stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #fff, #b9c2ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .stat-chip .stat-label {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section {
+    padding: 80px 0;
+  }
+
+  .section-head {
+    text-align: center;
+    max-width: 620px;
+    margin: 0 auto 56px;
+  }
+
+  .section-head .eyebrow {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    margin-bottom: 12px;
+  }
+
+  .section-head h2 {
+    font-size: clamp(1.7rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+
+  .section-head p {
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .feature-card {
+    position: relative;
+    padding: 30px 26px;
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .feature-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(108, 92, 231, 0.4);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(108, 92, 231, 0.15);
+  }
+
+  .feature-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.22), rgba(0, 210, 255, 0.14));
+    border: 1px solid rgba(108, 92, 231, 0.3);
+  }
+
+  .feature-card h3 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin-bottom: 9px;
+  }
+
+  .feature-card p {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps {
+    position: relative;
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .steps::before {
+    content: "";
+    position: absolute;
+    left: 27px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2), var(--accent-3));
+    opacity: 0.55;
+  }
+
+  .step {
+    position: relative;
+    display: flex;
+    gap: 26px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #fff;
+    background: linear-gradient(135deg, #6c5ce7, #00b8e6);
+    box-shadow: 0 0 0 6px rgba(108, 92, 231, 0.12), 0 8px 22px rgba(108, 92, 231, 0.45);
+    z-index: 1;
+  }
+
+  .step-body {
+    padding-top: 6px;
+  }
+
+  .step-body h3 {
+    font-size: 1.12rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .step-body p {
+    color: var(--muted);
+    font-size: 0.94rem;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq-list {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  details.faq-item {
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  details.faq-item[open] {
+    border-color: rgba(108, 92, 231, 0.45);
+    background: rgba(108, 92, 231, 0.06);
+  }
+
+  details.faq-item summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--text);
+    user-select: none;
+  }
+
+  details.faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-icon {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--accent-2);
+    background: rgba(0, 210, 255, 0.1);
+    border: 1px solid rgba(0, 210, 255, 0.25);
+    transition: transform 0.25s ease, color 0.25s ease, background 0.25s ease;
+  }
+
+  details.faq-item[open] .faq-icon {
+    transform: rotate(45deg);
+    color: #ff7b9c;
+    background: rgba(255, 123, 156, 0.1);
+    border-color: rgba(255, 123, 156, 0.3);
+  }
+
+  .faq-answer {
+    padding: 0 24px 22px;
+    color: var(--muted);
+    font-size: 0.93rem;
+  }
+
+  /* ---------- CTA BANNER ---------- */
+  .cta-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    padding: 70px 32px;
+    text-align: center;
+    background: linear-gradient(150deg, rgba(108, 92, 231, 0.22), rgba(0, 210, 255, 0.09), rgba(168, 85, 247, 0.16));
+    border: 1px solid rgba(108, 92, 231, 0.35);
+  }
+
+  .cta-banner::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 720px;
+    height: 720px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(108, 92, 231, 0.35) 0%, rgba(0, 210, 255, 0.12) 40%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-banner > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-banner h2 {
+    font-size: clamp(1.7rem, 4.5vw, 2.7rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+
+  .cta-banner p {
+    color: #c3c9ea;
+    max-width: 560px;
+    margin: 0 auto 32px;
+    font-size: 1rem;
+  }
+
+  .cta-banner .btn {
+    padding: 16px 40px;
+    font-size: 1.05rem;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 36px 0;
+    margin-top: 40px;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-inner p {
+    color: var(--muted);
+    font-size: 0.86rem;
+  }
+
+  .footer-links {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.86rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: color 0.2s ease;
+  }
+
+  .footer-links a:hover {
+    color: #fff;
+  }
+
+  .gh-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 900px) {
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nav-links {
+      display: none;
+    }
+
+    .nav-inner {
+      height: 62px;
+    }
+
+    .hero {
+      padding: 64px 0 56px;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+      margin-bottom: 44px;
+    }
+
+    .hero-actions .btn {
+      width: 100%;
+    }
+
+    .stats {
+      gap: 12px;
+    }
+
+    .stat-chip {
+      flex: 1 1 calc(50% - 12px);
+      min-width: 0;
+      padding: 14px 12px;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    section {
+      padding: 60px 0;
+    }
+
+    .steps::before {
+      left: 23px;
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      font-size: 1.05rem;
+    }
+
+    .step {
+      gap: 18px;
+    }
+
+    .cta-banner {
+      padding: 52px 22px;
+      border-radius: 20px;
+    }
+
+    .cta-banner .btn {
+      width: 100%;
+    }
+
+    .footer-inner {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#top" class="brand">
+        <span class="brand-mark">🛡️</span>
+        veil<span class="accent">-runner</span>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <a href="https://gitscore.cc" class="btn btn-primary">Download</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container">
+        <div class="pill">
+          <span class="dot"></span>
+          Undetected Loader · veil-runner
+        </div>
+        <h1>Run Anything. <span class="gradient-text">Get Flagged by Nothing.</span></h1>
+        <p class="hero-desc">
+          veil-runner is a driver-level loader built for the modern anti-cheat era. HWID spoofing,
+          signature bypass, manual-map injection and kernel-grade evasion — bundled into one
+          lightweight Windows executable.
+        </p>
+        <div class="hero-actions">
+          <a href="https://gitscore.cc" class="btn btn-primary">⬇ Download for Windows</a>
+          <a href="https://gitscore.cc" class="btn btn-ghost">
+            <svg class="gh-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+            </svg>
+            GitHub
+          </a>
+        </div>
+        <div class="stats">
+          <div class="stat-chip">
+            <span class="stat-value">120K+</span>
+            <span class="stat-label">Downloads</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-value">v4.2.1</span>
+            <span class="stat-label">Latest version</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-value">Windows 10 / 11</span>
+            <span class="stat-label">Supported OS</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-value">Free &amp; open source</span>
+            <span class="stat-label">License</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2>Built to Stay Invisible</h2>
+          <p>Every layer of veil-runner is engineered around one goal: your session survives every scan.</p>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon">🆔</div>
+            <h3>HWID Spoofer</h3>
+            <p>Rotates disk, SMBIOS, and network identifiers at boot so hardware bans never stick to your machine.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">🔏</div>
+            <h3>Signature Bypass</h3>
+            <p>Strips and re-signs loaded images in memory, keeping every module clean against signature integrity checks.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">🧩</div>
+            <h3>Manual-Map Injection</h3>
+            <
